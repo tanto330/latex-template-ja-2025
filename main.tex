@@ -1,0 +1,43 @@
+\documentclass{jsarticle}
+
+\usepackage{subfiles}
+\usepackage{listings}
+\usepackage{jlisting}
+\usepackage{color}
+\usepackage[dvipdfmx]{graphicx}
+\usepackage{physics}
+
+\usepackage{amsmath,amsfonts,amssymb}
+
+\title{ {\LaTeX} 自動ビルド・校正レビュー機能付きテンプレート : 2025 version }
+\author{tanto330}
+\date{\today}
+
+\newcommand{\code}[1]{\texttt{#1}}
+\lstset{
+    frame=single,
+    numbers=left,
+    tabsize=4,
+    basicstyle=\ttfamily,
+    numberstyle=\scriptsize,
+    commentstyle={\small\ttfamily \color[gray]{.5}},
+}
+
+\begin{document}
+\maketitle
+% chap1. intro 
+\subfile{sections/abstract}
+
+\newpage
+% chap2. thory 
+\subfile{sections/usage}
+
+\newpage
+% chap3. result 
+\subfile{sections/sample}
+
+\newpage
+% chap4. coclusion
+\subfile{sections/faq}
+
+\end{document}

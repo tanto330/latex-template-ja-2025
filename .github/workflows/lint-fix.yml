@@ -1,0 +1,98 @@
+# textlintでの文法チェックのワークフロー
+name: Lint-fix
+
+# Reviewdogでの指摘を有効に使うため、pull requestでのみ有効
+on:
+  workflow_dispatch:  
+  pull_request:
+    # Pull Requestかつ
+    # 以下のファイルに変更があった場合、このWorkflowを実行
+    paths:
+      - "prh.yml"
+      - ".textlintrc"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/lint.yaml"
+      - "**.tex"
+
+jobs:
+  lint:
+    permissions:
+      checks: write
+      contents: write
+      pull-requests: write
+      actions: read 
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with: 
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Setup node environment
+        uses: actions/setup-node@v4
+        with:
+          cache: npm
+          node-version: "20.x"
+
+      - uses: reviewdog/action-setup@v1
+        with:
+          reviewdog_version: latest
+
+      # 依存関係の構築とtextlintの実行
+      - name: Run lint
+        id: lint-check 
+        run: |
+          npm install
+          npm run lint
+        continue-on-error: true
+
+      # ↑のステップでtextlintが違反を検知した場合のみ実行
+      - name: Run reviewdog
+        if: steps.lint-check.outcome == 'failure'
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npm run --silent lint-style | reviewdog -f=checkstyle -name="textlint" -diff="git diff HEAD^" -reporter=github-pr-review
+
+      - name: Auto-fix and commit textlint errors
+        if:  steps.lint-check.outcome == 'failure'
+        id: auto-fix 
+        run: |
+          npm run fix
+          if git diff --quiet; then
+            echo "fixed=false" >> $GITHUB_OUTPUT
+          else
+            echo "fixed=true" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Commit fixes
+        if:  steps.lint-check.outcome == 'failure' && steps.auto-fix.outputs.fixed == 'true'
+        uses: EndBug/add-and-commit@v9
+        with:
+          author_name: github-actions
+          author_email: github-actions@github.com
+          message: 'fix: auto-fix textlint errors'
+          add: 'sections/'
+          #branch: ${{ github.ref_name }}
+
+      # 自動修正の結果をPRにコメント
+      - name: Report auto-fix results
+        if:  steps.lint-check.outcome == 'failure' && steps.auto-fix.outputs.fixed == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          NEW_COMMIT=$(git rev-parse HEAD)
+          NEW_COMMIT_SHORT=$(git rev-parse --short HEAD)
+          COMMIT_MESSAGE=$(git log -1 --pretty=format:"%s")
+    
+          echo "📊 Reporting commit details..."
+    
+          gh pr comment ${{ github.event.number }} --body "**Auto-fix Commit Created**
+
+          新しいコミットが作成されました
+          - コミットハッシュ: [\`$NEW_COMMIT_SHORT\`](https://github.com/${{ github.repository }}/commit/$NEW_COMMIT)
+          - 作成時刻: $(date -u '+%Y-%m-%d %H:%M:%S UTC')　" 
+      
