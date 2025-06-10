@@ -2,6 +2,7 @@ MAIN_SRC=main
 USE_DOCKER?=yes
 DOCKER_IMAGE=ghcr.io/pddg/latex:3.1.0
 YOUR_USERNAME = $(shell git remote get-url origin | sed 's/.*github\.com[:/]\([^/]*\)\/.*/\1/')
+REPO_NAME = $(shell git remote get-url origin 2>/dev/null | sed 's/.*github\.com[:/][^/]*\/\([^/.]*\).*/\1/')
 
 # TeX sources
 STY_SRCS=$(wildcard ./*.sty)
@@ -84,4 +85,4 @@ draft:
 	git commit -m $(branch) --allow-empty
 	git push origin $(branch)
 	@echo "Opening PR creation page for branch: $(branch)"
-	@explorer.exe "https://github.com/$(YOUR_USERNAME)/2026-Master-Thesis/compare/$(branch)"
+	@explorer.exe "https://github.com/$(YOUR_USERNAME)/$(REPO_NAME)/compare/$(branch)"
