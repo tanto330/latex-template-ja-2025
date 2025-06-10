@@ -2,7 +2,7 @@
 
 Welcome to "latex-template-ja-2025".
 
-Original repository is [latex-template-ja](https://github.com/pddg/latex-template-ja).
+Original repository is [pddg/latex-template-ja](https://github.com/pddg/latex-template-ja).
 
 This repository is a modified version of the original repository.
 
