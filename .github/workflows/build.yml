@@ -31,7 +31,9 @@ jobs:
 
       # 実際のビルドは `bin/build.sh` を実行している
       - name: Build
-        run: ./bin/build.sh
+        run: | 
+          chmod +x ./bin/build.sh
+          ./bin/build.sh
 
       # 生成したPDFをGitHub Actionsにアップロードする
       - name: Upload artifact
